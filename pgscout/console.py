@@ -108,15 +108,15 @@ def print_scouts(lines, state, scouts):
                               map(lambda s: len(s.username), scouts)))
     len_num = str(len(str(len(scouts))))
     if have_proxies():
-        line_tmpl = u'{:' + len_num + '} | {:' + len_username + '} | {:25} | {:4} | {:3} | {:5} | {:10} | {:5} | {:14} | {}'
+        line_tmpl = u'{:' + len_num + '} | {:' + len_username + '} | {:25} | {:4} | {:3} | {:5} | {:5} | {:5} | {:8} | {}'
         lines.append(
             line_tmpl.format('#', 'Scout', 'Proxy', 'Warn', 'Ban', 'Fails',
-                             'Encounters', 'Enc/h', 'Last Encounter',
+                             'Encs', 'Enc/h', 'Last Enc',
                              'Message'))
     else:
-        line_tmpl = u'{:' + len_num + '} | {:' + len_username + '} | {:4} | {:3} | {:5} | {:10} | {:5} | {:14} | {}'
+        line_tmpl = u'{:' + len_num + '} | {:' + len_username + '} | {:4} | {:3} | {:5} | {:5} | {:5} | {:8} | {}'
         lines.append(line_tmpl.format('#', 'Scout', 'Warn', 'Ban', 'Fails',
-                                      'Encounters', 'Enc/h', 'Last Encounter',
+                                      'Encs', 'Enc/h', 'Last Enc',
                                       'Message'))
     return print_lines(lines, scout_line, scouts, 4, state)
 
