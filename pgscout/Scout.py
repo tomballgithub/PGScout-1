@@ -35,8 +35,12 @@ class Scout(object):
         self.previous_encounter = None
         self.last_msg = ""
         self.total_encounters = 0
+        self.fails = 0
         self.warned = None
         self.banned = None
+
+        # Current Job
+        self.current_job = None
 
         # Things needed for requests
         self.inventory_timestamp = None
@@ -61,6 +65,7 @@ class Scout(object):
         self.log_info("Waiting for job...")
         while True:
             job = self.job_queue.get()
+            self.current_job = job
             try:
                 self.log_info(u"Scouting a {} at {}, {}".format(job.pokemon_name, job.lat, job.lng))
                 # Initialize API
@@ -336,7 +341,12 @@ class Scout(object):
         return response
 
     def scout_error(self, error_msg):
-        self.log_error("Error: {}".format(error_msg))
+        if self.current_job:
+            log_msg = "Error scouting {}: {}".format(self.current_job.pokemon_name, error_msg)
+        else:
+            log_msg = "Error: {}".format(error_msg)
+        self.log_error(log_msg)
+        self.fails += 1
         return {
             'success': False,
             'error': error_msg
