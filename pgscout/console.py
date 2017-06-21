@@ -89,7 +89,7 @@ def print_scouts(lines, state, scouts):
         if have_proxies():
             return line_tmpl.format(current_line, s.username, s.proxy,
                                     warned, banned,
-                                    s.errors,
+                                    s.fails,
                                     s.total_encounters,
                                     "{:5.1f}".format(s.encounters_per_hour),
                                     hr_tstamp(s.previous_encounter),
@@ -98,7 +98,7 @@ def print_scouts(lines, state, scouts):
             return line_tmpl.format(current_line,
                                     s.username,
                                     warned, banned,
-                                    s.errors,
+                                    s.fails,
                                     s.total_encounters,
                                     "{:5.1f}".format(s.encounters_per_hour),
                                     hr_tstamp(s.previous_encounter),
