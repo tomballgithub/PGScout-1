@@ -1,3 +1,4 @@
+import codecs
 import logging
 import sys
 import time
@@ -88,10 +89,10 @@ def load_accounts(jobs):
     accounts = []
     if accounts_file:
         log.info("Loading accounts from file {}.".format(accounts_file))
-        with open(accounts_file, 'r') as f:
-            for num, line in enumerate(f, 1):
+        with codecs.open(accounts_file, mode='r', encoding='utf-8') as f:
+            for line in f:
                 fields = line.split(",")
-                fields = map(str.strip, fields)
+                fields = map(unicode.strip, fields)
                 accounts.append(ScoutGuard(fields[0], fields[1], fields[2], jobs))
     elif cfg_get('pgpool_url') and cfg_get('pgpool_system_id') and cfg_get('pgpool_num_accounts') > 0:
 
