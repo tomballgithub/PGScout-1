@@ -135,6 +135,7 @@ class Scout(POGOAccount):
                     break
             except Exception as e:
                 self.log_error('Exception on GMO try {}: {}'.format(tries, repr(e)))
+            time.sleep(11)
 
         if len(wild_pokemon) == 0:
             self.log_info("Still no wild Pokemon found. Giving up.")
