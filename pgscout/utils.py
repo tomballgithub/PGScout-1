@@ -2,6 +2,7 @@ import json
 import logging
 import os
 from base64 import b64decode
+from cHaversine import haversine
 
 import psutil
 import requests
@@ -79,3 +80,7 @@ def load_pgpool_accounts(count, reuse=False):
     }
     r = requests.get("{}/account/request".format(cfg_get('pgpool_url')), params=request)
     return r.json()
+
+
+def distance(pos1, pos2):
+    return haversine((tuple(pos1))[0:2], (tuple(pos2))[0:2])

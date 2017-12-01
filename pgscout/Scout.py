@@ -3,7 +3,6 @@ import time
 from base64 import b64encode
 from collections import deque
 
-import geopy
 from mrmime.pogoaccount import POGOAccount, CaptchaException
 from mrmime.shadowbans import COMMON_POKEMON
 from mrmime.utils import jitter_location
@@ -13,7 +12,7 @@ from pgoapi.protos.pogoprotos.networking.responses.encounter_response_pb2 import
 from pgscout.config import cfg_get
 from pgscout.moveset_grades import get_moveset_grades
 from pgscout.stats import inc_for_pokemon
-from pgscout.utils import calc_pokemon_level, calc_iv
+from pgscout.utils import calc_pokemon_level, calc_iv, distance
 
 log = logging.getLogger(__name__)
 
@@ -155,7 +154,7 @@ class Scout(POGOAccount):
             loc = (job.lat, job.lng)
             min_dist = False
             for pkm in candidates:
-                d = geopy.distance.distance(loc, (pkm.latitude, pkm.longitude)).meters
+                d = distance(loc, (pkm.latitude, pkm.longitude))
                 if not min_dist or d < min_dist:
                     min_dist = d
                     target = pkm
