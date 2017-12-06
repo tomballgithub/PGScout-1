@@ -1,8 +1,8 @@
 import codecs
 import logging
+import signal
 import sys
 import time
-import signal
 from Queue import Queue
 from threading import Thread
 
@@ -33,12 +33,25 @@ jobs = Queue()
 # ===========================================================================
 
 
+def have_active_scouts():
+    for s in scouts:
+        if s.active:
+            return True
+    return False
+
+
 @app.route("/iv", methods=['GET'])
 def get_iv():
     if not app_state.accept_new_requests:
         return jsonify({
             'success': False,
             'error': 'Not accepting new requests.'
+        })
+
+    if not have_active_scouts():
+        return jsonify({
+            'success': False,
+            'error': 'No active scout available. All banned?'
         })
 
     pokemon_id = request.args["pokemon_id"]
