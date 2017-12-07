@@ -42,16 +42,21 @@ def have_active_scouts():
 
 @app.route("/iv", methods=['GET'])
 def get_iv():
+    error = None
     if not app_state.accept_new_requests:
-        return jsonify({
-            'success': False,
-            'error': 'Not accepting new requests.'
-        })
-
+        error = 'Not accepting new requests.'
     if not have_active_scouts():
+        error = 'No active scout available. All banned?'
+    max_queued_jobs = cfg_get('max_queued_jobs')
+    num_jobs = jobs.qsize()
+    if max_queued_jobs and num_jobs >= max_queued_jobs:
+        error = "Job queue full ({} items). Perform less encounters or add more scouts.".format(num_jobs)
+
+    if error:
+        log.warning(error)
         return jsonify({
             'success': False,
-            'error': 'No active scout available. All banned?'
+            'error': error
         })
 
     pokemon_id = request.args["pokemon_id"]
