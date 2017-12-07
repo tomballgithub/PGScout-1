@@ -39,8 +39,8 @@ class ScoutGuard(object):
             if use_pgpool():
                 self.swap_account()
             else:
-                # We don't have a replacement account, so just wait indefinitely.
-                time.sleep(sys.maxint)
+                # We don't have a replacement account, so just wait a veeeery long time.
+                time.sleep(60*60*24*1000)
                 break
 
     def swap_account(self):
