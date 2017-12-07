@@ -5,6 +5,13 @@
 #port: 4242             # Port to bind to.
 
 
+# API & Network Settings
+########################
+
+hash-key:               # Hash key(s) to use.
+#proxies-file:          # Load proxy list from text file (one proxy per line).
+
+
 # Accounts
 ##########
 
@@ -25,5 +32,7 @@
 # General Settings
 ##################
 
-hash-key:               # Hash key(s) to use.
-#proxies-file:          # Load proxy list from text file (one proxy per line).
+#max-queued-jobs:       # Maximum number of queued scout jobs before rejecting new jobs.
+                        # 0 (default) means no restriction.
+#max-job-ttl:           # Maximum number of minutes a job is allowed to be queued before it expires (Time-To-Live).
+                        # Expired jobs will be rejected when it's their turn. 0 (default) means no restriction.
