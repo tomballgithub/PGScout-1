@@ -39,6 +39,14 @@ Configuration parameters can also be given on the commandline:
 -l LEVEL, --level LEVEL
                     Minimum trainer level required. Lower levels will
                     yield an error.
+-mqj MAX_QUEUED_JOBS, --max-queued-jobs MAX_QUEUED_JOBS
+                    Maximum number of queued scout jobs before rejecting
+                    new jobs. 0 (default) means no restriction.
+-mjttl MAX_JOB_TTL, --max-job-ttl MAX_JOB_TTL
+                    Maximum number of minutes a job is allowed to be
+                    queued before it expires (Time-To-Live). Expired jobs
+                    will be rejected when its their turn. 0 (default)
+                    means no restriction.
 -sb SHADOWBAN_THRESHOLD, --shadowban-threshold SHADOWBAN_THRESHOLD
                     Mark an account as shadowbanned after this many
                     errors. If --pgpool_url is specified the account gets
@@ -71,11 +79,16 @@ Don't forget to run `pip install -r requirements.txt` at least once before actua
 # Requests
 PGScout accepts **HTTP GET** requests at `http://<your host>:<port>/iv` and needs these parameters:
 
-* `pokemon_id`: The Pokédex number of the Pokémon
-* `encounter_id`: Encounter ID (Base64 encoded **or** as long integer) provided by map scanner
-* `spawn_point_id`: ID of spawn point provided by map scanner as **hex string**
-* `latitude`
-* `longitude`
+* `pokemon_id`: The Pokédex number of the Pokémon _(mandatory)_
+* `encounter_id`: Encounter ID (Base64 encoded **or** as long integer) provided by map scanner _(recommended)_
+* `spawn_point_id`: ID of spawn point provided by map scanner as **hex string** _(recommended)_
+* `latitude`: Latitude of Pokémon spawn _(mandatory)_
+* `longitude`: Longitude of Pokémon spawn _(mandatory)_
+* `despawn_time`: Time in seconds since the Epoch when the Pokémon disappears, if known. _(optional)_ 
+
+**Note** that if either `encounter_id` or `spawn_point_id` is missing PGScout first performs a `GET_MAP_OBJECTS` request
+to scan the given location. It then searches for the nearest Pokémon with the given `pokemon_id` and performs the encounter
+on this one. This is generally **not recommended**! 
 
 An example **request** looks like this:
 ```

@@ -58,6 +58,12 @@ class Scout(POGOAccount):
         while True:
             job = self.job_queue.get()
             try:
+                if job.expired():
+                    self.log_warning(
+                        u"Scout job for {} at {}, {} expired. Rejecting.".format(job.pokemon_name, job.lat, job.lng))
+                    job.result = self.scout_error(self.last_msg)
+                    continue
+
                 self.log_info(u"Scouting a {} at {}, {}".format(job.pokemon_name, job.lat, job.lng))
                 # Initialize API
                 (lat, lng) = jitter_location(job.lat, job.lng)

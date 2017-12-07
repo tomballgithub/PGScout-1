@@ -67,6 +67,7 @@ def get_iv():
     encounter_id = normalize_encounter_id(request.args.get("encounter_id"))
     # Spawn point ID is assumed to be a hex string
     spawn_point_id = request.args.get("spawn_point_id")
+    despawn_time = request.args.get("despawn_time")
 
     # Check cache
     cache_key = encounter_id if encounter_id else "{}-{}-{}".format(pokemon_id, lat, lng)
@@ -77,7 +78,7 @@ def get_iv():
         return jsonify(result)
 
     # Create a ScoutJob
-    job = ScoutJob(pokemon_id, encounter_id, spawn_point_id, lat, lng)
+    job = ScoutJob(pokemon_id, encounter_id, spawn_point_id, lat, lng, despawn_time=despawn_time)
 
     # Enqueue and wait for job to be processed
     jobs.put(job)
