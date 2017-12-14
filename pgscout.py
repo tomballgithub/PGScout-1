@@ -6,15 +6,16 @@ import time
 from Queue import Queue
 from threading import Thread
 
-from flask import Flask, request, jsonify
+import math
+from flask import Flask, request, jsonify, url_for
 
 from pgscout.ScoutGuard import ScoutGuard
 from pgscout.ScoutJob import ScoutJob
-from pgscout.cache import get_cached_encounter, cache_encounter, cleanup_cache
+from pgscout.cache import get_cached_encounter, cache_encounter, cleanup_cache, get_cached_count
 from pgscout.config import cfg_get, cfg_init
-from pgscout.console import print_status
+from pgscout.console import print_status, hr_tstamp
 from pgscout.utils import get_pokemon_name, normalize_encounter_id, \
-    load_pgpool_accounts, app_state
+    load_pgpool_accounts, app_state, rss_mem_size
 
 logging.basicConfig(level=logging.INFO,
     format='%(asctime)s [%(threadName)16s][%(module)14s][%(levelname)8s] %(message)s')
@@ -89,6 +90,77 @@ def get_iv():
     if job.result['success']:
         cache_encounter(cache_key, job.result)
     return jsonify(job.result)
+
+
+@app.route("/status/", methods=['GET'])
+@app.route("/status/<int:page>", methods=['GET'])
+def status(page=1):
+
+    def td(cell):
+        return "<td>{}</td>".format(cell)
+
+    max_scouts_per_page = 25
+    max_page = int(math.ceil(len(scouts)/float(max_scouts_per_page)))
+    lines = "<style> th,td { padding-left: 10px; padding-right: 10px; border: 1px solid #ddd; } table { border-collapse: collapse } td { text-align:center }</style>"
+    lines += "<meta http-equiv='Refresh' content='5'>"
+    lines += "Accepting requests: {} | Job queue length: {} | Cached encounters: {} | Mem Usage: {}".format(
+                app_state.accept_new_requests, jobs.qsize(), get_cached_count(), rss_mem_size())
+    lines += "<br><br>"
+
+    if cfg_get('proxies'):
+        headers = ['#', 'Scout', 'Proxy', 'Start', 'Warn', 'Active', 'Encounters', 'Enc/h', 'Errors',
+                             'Last Encounter', 'Message']
+    else:
+        headers = ['#', 'Scout', 'Start', 'Warn', 'Active', 'Encounters', 'Enc/h', 'Errors',
+                                      'Last Encounter', 'Message']
+
+    lines += "<table><tr>"
+    for h in headers:
+        lines += "<th>{}</th>".format(h)
+    lines += "</tr>"
+
+    if page * max_scouts_per_page > len(scouts):    #Page number is too great, set to last page
+        page = max_page
+    if page < 1:
+        page = 1
+    for i in range((page-1)*max_scouts_per_page, page*max_scouts_per_page):
+        if i >= len(scouts):
+            break
+        lines += "<tr>"
+        s = scouts[i].acc
+        warn = s.get_state('warn')
+        warn_str = '' if warn is None else ('Yes' if warn else 'No')
+        lines += td(i+1)
+        lines += td(s.username)
+        lines += td(s.proxy_url) if cfg_get('proxies') else ""
+        lines += td(hr_tstamp(s.start_time))
+        lines += td(warn_str)
+        lines += td('Yes' if scouts[i].active else 'No')
+        lines += td(s.total_encounters)
+        lines += td("{:5.1f}".format(s.encounters_per_hour))
+        lines += td(s.errors)
+        lines += td(hr_tstamp(s.previous_encounter))
+        lines += td(s.last_msg)
+        lines += "</tr>"
+    lines += "</table>"
+
+    lines += "<br>"
+    if len(scouts) > max_scouts_per_page:  # Use pages if we have more than max_scouts_per_page
+        lines += "Page: "
+        if max_page > 1 and page > 1:
+            lines += "<a href={}>&lt;</a> | ".format(url_for('status', page=page-1))
+        for p in range(1, max_page+1):
+            if p == page:
+                lines += str(p)
+            else:
+                url = url_for('status', page=p)
+                lines += "<a href={}>{}</a>".format(url, p)
+            if p < max_page:
+                lines += " | "
+        if max_page > 1 and page < max_page:
+            lines += " | <a href={}>&gt;</a>".format(url_for('status', page=page+1))
+
+    return lines
 
 
 def run_webserver():
