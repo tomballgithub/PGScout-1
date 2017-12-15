@@ -64,6 +64,7 @@ def get_iv():
     pokemon_name = get_pokemon_name(pokemon_id)
     lat = request.args["latitude"]
     lng = request.args["longitude"]
+    weather = request.args.get("weather", "unknown")
 
     encounter_id = normalize_encounter_id(request.args.get("encounter_id"))
     # Spawn point ID is assumed to be a hex string
@@ -71,7 +72,7 @@ def get_iv():
     despawn_time = request.args.get("despawn_time")
 
     # Check cache
-    cache_key = encounter_id if encounter_id else "{}-{}-{}".format(pokemon_id, lat, lng)
+    cache_key = "{}-{}".format(encounter_id, weather) if encounter_id else "{}-{}-{}".format(pokemon_id, lat, lng)
     result = get_cached_encounter(cache_key)
     if result:
         log.info(
