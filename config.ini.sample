@@ -36,3 +36,7 @@ hash-key:               # Hash key(s) to use.
                         # 0 (default) means no restriction.
 #max-job-ttl:           # Maximum number of minutes a job is allowed to be queued before it expires (Time-To-Live).
                         # Expired jobs will be rejected when it's their turn. 0 (default) means no restriction.
+#low-prio-file:         # File containing Pokemon names or IDs of Pokemon being encountered with low priority.
+                        # Requests for high priority encounters are being preferred. If the queue is full any
+                        # requests for low priority encounters are being dropped where high prio encounters are
+                        # still being queued.

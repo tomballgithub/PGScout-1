@@ -11,9 +11,9 @@ from datetime import datetime
 from threading import Thread
 
 from pgscout.cache import get_cached_count
-from pgscout.config import cfg_get
+from pgscout.config import cfg_get, get_pokemon_name
 from pgscout.stats import get_pokemon_stats
-from pgscout.utils import get_pokemon_name, rss_mem_size, app_state
+from pgscout.utils import rss_mem_size, app_state
 
 default_log_level = 0
 
@@ -31,6 +31,9 @@ def input_processor(state):
             os._exit(0)
         elif command == 'p':
             state['display'] = 'pokemon'
+            state['page'] = 1
+        elif command == 'u':
+            state['display'] = 'queue'
             state['page'] = 1
         elif command == 't':
             app_state.toggle_new_requests()
@@ -80,6 +83,8 @@ def print_status(scouts, initial_display, jobs):
             total_pages = print_scouts(lines, state, scouts)
         elif state['display'] == 'pokemon':
             total_pages = print_pokemon(lines, state)
+        elif state['display'] == 'queue':
+            total_pages = print_job_queue(lines, state, jobs)
 
         # Footer
         lines.append('Page {}/{}. Page number to switch pages. <enter> to '
@@ -90,6 +95,18 @@ def print_status(scouts, initial_display, jobs):
         # Print lines
         os.system('cls' if os.name == 'nt' else 'clear')
         print ('\n'.join(lines)).encode('utf-8')
+
+
+def print_job_queue(lines, state, queue):
+    def print_job(position, entry):
+        prio = "HIGH" if entry[0] == 0 else "LOW"
+        time = entry[1]
+        job = entry[2]
+        return line_tmpl.format(position, prio, time, job.pokemon_name)
+
+    line_tmpl = u'{:4} | {:4} | {:15} | {}'
+    lines.append(line_tmpl.format('Pos', 'Prio', 'Time', 'Pokemon'))
+    return print_lines(lines, print_job, sorted(queue.queue), 4, state)
 
 
 def print_scouts(lines, state, scouts):

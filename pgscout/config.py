@@ -1,8 +1,12 @@
 # Configuration with default values
+import json
 import logging
+import os
 import sys
+from threading import Thread
 
 import configargparse
+import time
 from mrmime import init_mr_mime
 from mrmime.cyclicresourceprovider import CyclicResourceProvider
 
@@ -16,6 +20,11 @@ args = None
 def cfg_get(key, default=None):
     global args
     return getattr(args, key)
+
+
+def cfg_set(key, value):
+    global args
+    setattr(args, key, value)
 
 
 def parse_args():
@@ -65,6 +74,9 @@ def parse_args():
     parser.add_argument('-pgpsid', '--pgpool-system-id',
                         help='System ID for PGPool. Required if --pgpool-url given.')
 
+    parser.add_argument('-lpf', '--low-prio-file',
+                        help='File with Pokemon names or IDs that will be treated with low priority or even dropped.')
+
     accs = parser.add_mutually_exclusive_group(required=True)
     accs.add_argument('-pgpn', '--pgpool-num-accounts', type=int, default=0,
                       help='Use this many accounts from PGPool. --pgpool-url required.')
@@ -89,6 +101,46 @@ def init_resoures_from_file(resource_file):
             log.exception('Could not load {} from {}.'.format(resource_file))
             exit(1)
     return resources
+
+
+def get_pokemon_name(pokemon_id):
+    if not hasattr(get_pokemon_name, 'pokemon'):
+        file_path = os.path.join('pokemon.json')
+
+        with open(file_path, 'r') as f:
+            get_pokemon_name.pokemon = json.loads(f.read())
+    return get_pokemon_name.pokemon[str(pokemon_id)]
+
+
+def get_pokemon_id(pokemon_name):
+    if not hasattr(get_pokemon_id, 'ids'):
+        if not hasattr(get_pokemon_name, 'pokemon'):
+            # initialize from file
+            get_pokemon_name(1)
+
+        get_pokemon_id.ids = {}
+        for pokemon_id, name in get_pokemon_name.pokemon.iteritems():
+            get_pokemon_id.ids[name] = int(pokemon_id)
+
+    return get_pokemon_id.ids.get(pokemon_name, -1)
+
+
+def read_pokemon_ids_from_file(f):
+    pokemon_ids = set()
+    for name in f:
+        name = name.strip()
+        # Lines starting with # mean: skip this line
+        if name[0] in ('#'):
+            continue
+        try:
+            # Pokemon can be given as Pokedex ID
+            pid = int(name)
+        except ValueError:
+            # Perform the usual name -> ID lookup
+            pid = get_pokemon_id(unicode(name, 'utf-8'))
+        if pid and not pid == -1:
+            pokemon_ids.add(pid)
+    return sorted(pokemon_ids)
 
 
 def cfg_init():
@@ -117,7 +169,32 @@ def cfg_init():
     for proxy in args.proxies:
         args.proxy_provider.add_resource(proxy)
 
+    args.low_prio_pokemon = []
+    if args.low_prio_file:
+        with open(args.low_prio_file) as f:
+            args.low_prio_pokemon = read_pokemon_ids_from_file(f)
+        if args.low_prio_pokemon:
+            log.info("{} low priority Pokemon loaded from {}".format(len(args.low_prio_pokemon), args.low_prio_file))
+            t = Thread(target=watch_low_prio_file, args=(args.low_prio_file,))
+            t.daemon = True
+            t.start()
+
+
+def watch_low_prio_file(filename):
+    statbuf = os.stat(filename)
+    watch_low_prio_file.tstamp = statbuf.st_mtime
+    while True:
+        statbuf = os.stat(filename)
+        current_mtime = statbuf.st_mtime
+
+        if current_mtime != watch_low_prio_file.tstamp:
+            with open(filename) as f:
+                cfg_set('low_prio_pokemon', read_pokemon_ids_from_file(f))
+                log.info("File {} changed on disk. Re-read.".format(filename))
+                watch_low_prio_file.tstamp = current_mtime
+
+        time.sleep(5)
+
 
 def use_pgpool():
     return bool(args.pgpool_url and args.pgpool_system_id and args.pgpool_num_accounts > 0)
-

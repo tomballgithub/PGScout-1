@@ -1,8 +1,8 @@
 import logging
-import time
 from base64 import b64encode
 from collections import deque
 
+import time
 from mrmime.pogoaccount import POGOAccount, CaptchaException
 from mrmime.shadowbans import COMMON_POKEMON
 from mrmime.utils import jitter_location
@@ -56,7 +56,7 @@ class Scout(POGOAccount):
     def run(self):
         self.log_info("Waiting for job...")
         while True:
-            job = self.job_queue.get()
+            (prio, t, job) = self.job_queue.get()
             try:
                 if job.expired():
                     self.log_warning(

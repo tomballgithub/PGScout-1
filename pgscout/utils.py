@@ -7,8 +7,8 @@ from cHaversine import haversine
 import psutil
 import requests
 
-from pgscout.config import cfg_get
 from pgscout.AppState import AppState
+from pgscout.config import cfg_get
 
 log = logging.getLogger(__name__)
 
@@ -38,15 +38,6 @@ def normalize_encounter_id(eid):
         return long(eid)
     except:
         return long(b64decode(eid))
-
-
-def get_pokemon_name(pokemon_id):
-    if not hasattr(get_pokemon_name, 'pokemon'):
-        file_path = os.path.join('pokemon.json')
-
-        with open(file_path, 'r') as f:
-            get_pokemon_name.pokemon = json.loads(f.read())
-    return get_pokemon_name.pokemon[str(pokemon_id)]
 
 
 def get_move_name(move_id):
@@ -84,3 +75,8 @@ def load_pgpool_accounts(count, reuse=False):
 
 def distance(pos1, pos2):
     return haversine((tuple(pos1))[0:2], (tuple(pos2))[0:2])
+
+
+def get_pokemon_prio(pokemon_id):
+    low_prio_pokemon = cfg_get('low_prio_pokemon')
+    return 1 if low_prio_pokemon and int(pokemon_id) in low_prio_pokemon else 0

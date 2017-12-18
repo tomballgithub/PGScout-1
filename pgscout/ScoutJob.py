@@ -2,8 +2,7 @@ import random
 
 import time
 
-from pgscout.config import cfg_get
-from pgscout.utils import get_pokemon_name
+from pgscout.config import cfg_get, get_pokemon_name
 
 
 class ScoutJob(object):
