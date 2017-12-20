@@ -15,7 +15,7 @@ from pgscout.cache import get_cached_encounter, cache_encounter, cleanup_cache, 
 from pgscout.config import cfg_get, cfg_init, get_pokemon_name
 from pgscout.console import print_status, hr_tstamp
 from pgscout.utils import normalize_encounter_id, \
-    load_pgpool_accounts, app_state, rss_mem_size, get_pokemon_prio
+    load_pgpool_accounts, app_state, rss_mem_size, get_pokemon_prio, PRIO_HIGH, PRIO_LOW, PRIO_NAMES
 
 logging.basicConfig(level=logging.INFO,
     format='%(asctime)s [%(threadName)16s][%(module)14s][%(levelname)8s] %(message)s')
@@ -41,35 +41,31 @@ def have_active_scouts():
     return False
 
 
+def reject(reason):
+    log.warning(reason)
+    return jsonify({
+        'success': False,
+        'error': reason
+    })
+
+
 @app.route("/iv", methods=['GET'])
 def get_iv():
-    error = None
     if not app_state.accept_new_requests:
-        error = 'Not accepting new requests.'
+        return reject('Not accepting new requests.')
     if not have_active_scouts():
-        error = 'No active scout available. All banned?'
+        return reject('No active scout available. All banned?')
 
     pokemon_id = request.args["pokemon_id"]
     pokemon_name = get_pokemon_name(pokemon_id)
+    forced = request.args.get('forced')
+    prio = PRIO_HIGH if forced is not None else get_pokemon_prio(pokemon_id)
 
     max_queued_jobs = cfg_get('max_queued_jobs')
     num_jobs = jobs.qsize()
-    if max_queued_jobs and num_jobs >= max_queued_jobs:
-        low_prio_pokemon = cfg_get('low_prio_pokemon')
-        if low_prio_pokemon:
-            if get_pokemon_prio(pokemon_id) == 1:
-                error = "Job queue full ({} items). Dropping low-prio encounter.".format(num_jobs)
-            else:
-                log.info("Enqueueing high-prio encounter for {}.".format(pokemon_name))
-        else:
-            error = "Job queue full ({} items). Ignoring encounter.".format(num_jobs)
-
-    if error:
-        log.warning(error)
-        return jsonify({
-            'success': False,
-            'error': error
-        })
+    if max_queued_jobs and num_jobs >= max_queued_jobs and prio == PRIO_LOW:
+        return reject(
+            "Job queue full ({} items). Rejecting encounter with priority '{}'.".format(num_jobs, PRIO_NAMES[prio]))
 
     lat = request.args["latitude"]
     lng = request.args["longitude"]
@@ -92,7 +88,7 @@ def get_iv():
     job = ScoutJob(pokemon_id, encounter_id, spawn_point_id, lat, lng, despawn_time=despawn_time)
 
     # Enqueue and wait for job to be processed
-    jobs.put((get_pokemon_prio(pokemon_id), time.time(), job))
+    jobs.put((prio, time.time(), job))
     while not job.processed:
         time.sleep(1)
 

@@ -13,7 +13,7 @@ from threading import Thread
 from pgscout.cache import get_cached_count
 from pgscout.config import cfg_get, get_pokemon_name
 from pgscout.stats import get_pokemon_stats
-from pgscout.utils import rss_mem_size, app_state
+from pgscout.utils import rss_mem_size, app_state, PRIO_NAMES
 
 default_log_level = 0
 
@@ -99,14 +99,16 @@ def print_status(scouts, initial_display, jobs):
 
 def print_job_queue(lines, state, queue):
     def print_job(position, entry):
-        prio = "HIGH" if entry[0] == 0 else "LOW"
+        prio = PRIO_NAMES[entry[0]].upper()
         time = entry[1]
         job = entry[2]
         return line_tmpl.format(position, prio, time, job.pokemon_name)
 
-    line_tmpl = u'{:4} | {:4} | {:15} | {}'
+    line_tmpl = u'{:4} | {:6} | {:15} | {}'
+    lines.append("")
+    lines.append("Scout Job Queue")
     lines.append(line_tmpl.format('Pos', 'Prio', 'Time', 'Pokemon'))
-    return print_lines(lines, print_job, sorted(queue.queue), 4, state)
+    return print_lines(lines, print_job, sorted(queue.queue), 5, state)
 
 
 def print_scouts(lines, state, scouts):

@@ -12,7 +12,7 @@ from pgoapi.protos.pogoprotos.networking.responses.encounter_response_pb2 import
 from pgscout.config import cfg_get
 from pgscout.moveset_grades import get_moveset_grades
 from pgscout.stats import inc_for_pokemon
-from pgscout.utils import calc_pokemon_level, calc_iv, distance
+from pgscout.utils import calc_pokemon_level, calc_iv, distance, PRIO_NAMES
 
 log = logging.getLogger(__name__)
 
@@ -64,7 +64,9 @@ class Scout(POGOAccount):
                     job.result = self.scout_error(self.last_msg)
                     continue
 
-                self.log_info(u"Scouting a {} at {}, {}".format(job.pokemon_name, job.lat, job.lng))
+                self.log_info(u"Scouting a {} at {}, {} with {} priority".format(job.pokemon_name, job.lat, job.lng,
+                                                                                 PRIO_NAMES[prio]))
+
                 # Initialize API
                 (lat, lng) = jitter_location(job.lat, job.lng)
                 self.set_position(lat, lng, job.altitude)

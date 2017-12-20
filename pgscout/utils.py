@@ -14,6 +14,15 @@ log = logging.getLogger(__name__)
 
 app_state = AppState()
 
+PRIO_HIGH = 0
+PRIO_NORMAL = 1
+PRIO_LOW = 2
+PRIO_NAMES = {
+    PRIO_HIGH: "High",
+    PRIO_NORMAL: "Normal",
+    PRIO_LOW: "Low",
+}
+
 
 def rss_mem_size():
     process = psutil.Process(os.getpid())
@@ -79,4 +88,4 @@ def distance(pos1, pos2):
 
 def get_pokemon_prio(pokemon_id):
     low_prio_pokemon = cfg_get('low_prio_pokemon')
-    return 1 if low_prio_pokemon and int(pokemon_id) in low_prio_pokemon else 0
+    return PRIO_NORMAL if low_prio_pokemon and int(pokemon_id) not in low_prio_pokemon else PRIO_LOW
