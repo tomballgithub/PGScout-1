@@ -7,12 +7,21 @@ from cHaversine import haversine
 import psutil
 import requests
 
-from pgscout.config import cfg_get
 from pgscout.AppState import AppState
+from pgscout.config import cfg_get
 
 log = logging.getLogger(__name__)
 
 app_state = AppState()
+
+PRIO_HIGH = 0
+PRIO_NORMAL = 1
+PRIO_LOW = 2
+PRIO_NAMES = {
+    PRIO_HIGH: "High",
+    PRIO_NORMAL: "Normal",
+    PRIO_LOW: "Low",
+}
 
 
 def rss_mem_size():
@@ -38,15 +47,6 @@ def normalize_encounter_id(eid):
         return long(eid)
     except:
         return long(b64decode(eid))
-
-
-def get_pokemon_name(pokemon_id):
-    if not hasattr(get_pokemon_name, 'pokemon'):
-        file_path = os.path.join('pokemon.json')
-
-        with open(file_path, 'r') as f:
-            get_pokemon_name.pokemon = json.loads(f.read())
-    return get_pokemon_name.pokemon[str(pokemon_id)]
 
 
 def get_move_name(move_id):
@@ -84,3 +84,8 @@ def load_pgpool_accounts(count, reuse=False):
 
 def distance(pos1, pos2):
     return haversine((tuple(pos1))[0:2], (tuple(pos2))[0:2])
+
+
+def get_pokemon_prio(pokemon_id):
+    low_prio_pokemon = cfg_get('low_prio_pokemon')
+    return PRIO_NORMAL if low_prio_pokemon and int(pokemon_id) not in low_prio_pokemon else PRIO_LOW

@@ -1,0 +1,6 @@
+# The following Pokemon are low-priority. Encounters for other Pokemon are always preferred and
+# if the queue gets full requests for low priority Pokemon are being ignored.
+# You can give Pokemon names or IDs.
+Pidgey
+Rattata
+Hoothoot
