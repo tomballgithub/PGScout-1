@@ -34,6 +34,7 @@ class ScoutGuard(object):
             self.active = True
             self.acc.run()
             self.active = False
+            self.acc.release(reason=self.acc.last_msg)
 
             # Scout disabled, probably (shadow)banned.
             if use_pgpool():
@@ -44,7 +45,6 @@ class ScoutGuard(object):
                 break
 
     def swap_account(self):
-        self.acc.release(reason=self.acc.last_msg)
         while True:
             new_acc = load_pgpool_accounts(1)
             if new_acc:
