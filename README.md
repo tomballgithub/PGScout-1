@@ -4,8 +4,6 @@ PGScout is a webservice that takes coordinates and encounter ID of a Pokémon in
 
 **Bonus feature #2**: PGScout also works if you don't have the `encounter_id` and `spawn_point_id` of the Pokémon which are usually necessary to perform the encounter request. **Location and Pokédex ID is enough** for PGScout to work. It will scan the area for the desired Pokémon and perform the encounter afterwards.
 
-# Support the Author [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/slop)
-If you like this tool and feel the urgent need to **thank** me, the best way to do it is via **BitCoin (_1PNdXhzvvz2ytCf8mbFdF9MQaABzpjSbJi_)** or **[PayPal](https://www.paypal.me/slop)**. Seriously, that would be so awesome! :-D If you can't or don't want to use PayPal or BitCoin some **level 30+** accounts. You can find me on the **[PGTools Discord Server](https://discord.gg/Vwe5mTa)** and on various other Pokémon GO related Discords as "sLoPPydrive".
 
 # Get Help
 Come join the official **[PGTools Discord Server](https://discord.gg/Vwe5mTa)** for [PGScout](https://github.com/sLoPPydrive/PGScout), [PGNumbra](https://github.com/sLoPPydrive/PGNumbra), [PGPool](https://github.com/sLoPPydrive/PGPool) and the PGTools [RocketMap](https://github.com/sLoPPydrive/RocketMap) and [PokeAlarm](https://github.com/sLoPPydrive/PokeAlarm) forks to get help or just hang around. You are very welcome. :)
