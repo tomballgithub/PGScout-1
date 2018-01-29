@@ -61,7 +61,7 @@ class Scout(POGOAccount):
                 if job.expired():
                     self.log_warning(
                         u"Scout job for {} at {}, {} expired. Rejecting.".format(job.pokemon_name, job.lat, job.lng))
-                    job.result = self.scout_error(self.last_msg)
+                    job.result = self.scout_error(self.last_msg, False)
                     continue
 
                 self.log_info(u"Scouting a {} at {}, {} with {} priority".format(job.pokemon_name, job.lat, job.lng,
@@ -71,7 +71,7 @@ class Scout(POGOAccount):
                 (lat, lng) = jitter_location(job.lat, job.lng)
                 self.set_position(lat, lng, job.altitude)
                 if not self.check_login():
-                    job.result = self.scout_error(self.last_msg)
+                    job.result = self.scout_error(self.last_msg, False)
                     if self.is_banned() or self.has_captcha():
                         break
                     else:
@@ -84,7 +84,7 @@ class Scout(POGOAccount):
                         time.sleep(2)
                         job.result = self.scout_by_encounter_id(job)
                     else:
-                        job.result = self.scout_error("Could not determine encounter_id for {} at {}, {}".format(job.pokemon_name, job.lat, job.lng))
+                        job.result = self.scout_error("Could not determine encounter_id for {} at {}, {}".format(job.pokemon_name, job.lat, job.lng), False)
 
                 # Mark shadowbanned if too many errors
                 sb_threshold = cfg_get('shadowban_threshold')
@@ -96,13 +96,13 @@ class Scout(POGOAccount):
                     break
 
             except (AuthException, BannedAccountException, CaptchaException) as e:
-                job.result = self.scout_error(self.last_msg)
+                job.result = self.scout_error(self.last_msg, False)
                 break
             except Exception:
-                job.result = self.scout_error(repr(sys.exc_info()))
+                job.result = self.scout_error(repr(sys.exc_info()), False)
             finally:
                 job.processed = True
-                if self.is_banned() or self.has_captcha():
+                if self.is_banned() or self.has_captcha() or job.result["swap_account"]:
                     break
 
     def update_history(self):
@@ -186,16 +186,16 @@ class Scout(POGOAccount):
 
     def parse_encounter_response(self, responses, job):
         if not responses:
-            return self.scout_error("Empty encounter response")
+            return self.scout_error("Empty encounter response", False)
 
         encounter = responses.get('ENCOUNTER')
         if not encounter:
-            return self.scout_error("No encounter result returned.")
+            return self.scout_error("No encounter result returned.", False)
         if not encounter.HasField('wild_pokemon'):
             # Only count as error if it was a rare Pokemon - errors on common Pokemon won't mean shadowban
             if job.pokemon_id not in COMMON_POKEMON:
                 self.errors += 1
-            return self.scout_error("No wild pokemon info found.")
+            return self.scout_error("No wild pokemon info found.", False)
 
         enc_status = encounter.status
 
@@ -205,7 +205,7 @@ class Scout(POGOAccount):
             self.shadowbanned = True
 
         if enc_status != 1:
-            return self.scout_error(ENCOUNTER_RESULTS[enc_status])
+            return self.scout_error(ENCOUNTER_RESULTS[enc_status], False)
 
         # Reset error counter if rare Pokemon was found
         if job.pokemon_id not in COMMON_POKEMON:
@@ -215,7 +215,7 @@ class Scout(POGOAccount):
         if scout_level < cfg_get('level'):
             return self.scout_error(
                 "Trainer level {} is too low. Needs to be {}+".format(
-                    scout_level, cfg_get("level")))
+                    scout_level, cfg_get("level")), True)
 
         pokemon_info = encounter.wild_pokemon.pokemon_data
         cp = pokemon_info.cp
@@ -232,6 +232,7 @@ class Scout(POGOAccount):
 
         responses = {
             'success': True,
+            'swap_account': False,
             'encounter_id': job.encounter_id,
             'encounter_id_b64': b64encode(str(job.encounter_id)),
             'height': pokemon_info.height_m,
@@ -265,12 +266,13 @@ class Scout(POGOAccount):
         inc_for_pokemon(job.pokemon_id)
         return responses
 
-    def scout_error(self, error_msg):
+    def scout_error(self, error_msg, swap_acct):
         if error_msg != self.last_msg:
             self.log_error(error_msg)
         return {
             'success': False,
-            'error': error_msg
+            'error': error_msg,
+            'swap_account': swap_acct
         }
 
     def jittered_location(self, job):
