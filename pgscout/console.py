@@ -156,7 +156,7 @@ def print_scouts(lines, state, scouts):
         line_tmpl = u'{:' + len_num + '} | {:' + len_username + '} | {:8} | {:4} | {:6} | {:10} | {:6} | {:6} | {:14} | {}'
         lines.append(line_tmpl.format('#', 'Scout', 'Start', 'Warn', 'Active', 'Encounters', 'Enc/h', 'Errors',
                                       'Last Encounter', 'Message'))
-    return print_lines(lines, scout_line, scouts, 4, state)
+    return print_lines(lines, scout_line, scouts, 7, state)
 
 
 def print_pokemon(lines, state):
