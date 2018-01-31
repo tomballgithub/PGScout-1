@@ -1,3 +1,4 @@
+# coding=utf-8
 import codecs
 import logging
 import signal
@@ -14,6 +15,7 @@ from pgscout.ScoutJob import ScoutJob
 from pgscout.cache import get_cached_encounter, cache_encounter, cleanup_cache, get_cached_count
 from pgscout.config import cfg_get, cfg_init, get_pokemon_name
 from pgscout.console import print_status, hr_tstamp
+from pgscout.stats import get_pokemon_stats
 from pgscout.utils import normalize_encounter_id, \
     load_pgpool_accounts, app_state, rss_mem_size, get_pokemon_prio, PRIO_HIGH, PRIO_LOW, PRIO_NAMES
 
@@ -165,6 +167,93 @@ def status(page=1):
                 lines += " | "
         if max_page > 1 and page < max_page:
             lines += " | <a href={}>&gt;</a>".format(url_for('status', page=page+1))
+
+    return lines
+
+
+@app.route("/pokemon/<int:page>", methods=['GET', 'POST'])
+@app.route("/pokemon/", methods=['GET', 'POST'])
+def pokemon(page=1):
+
+    def td(cell):
+        return u"<td>{}</td>".format(cell)
+
+    pstats = get_pokemon_stats()
+    headers = ["#", "Pokemon Name", "Encounters"]
+    hdict = {'#': 'pid', 'Pokemon Name': 'pname', 'Encounters': 'count'}
+    sort = request.args.get('sort', 'count')
+    reverse = request.args.get('reverse', True)
+    max_pokemon_per_page = int(request.args.get('max_per_page', 25))
+    if reverse == "False":
+        reverse = False
+    elif reverse == "True":
+        reverse = True
+    for i in range(0, len(pstats)):
+        pstats[i]['pname'] = get_pokemon_name(pstats[i]['pid'])
+    pstats.sort(key=lambda x: x[sort], reverse=reverse)
+    max_page = int(math.ceil(len(pstats) / float(max_pokemon_per_page)))
+
+    lines = u"<style> th,td { padding-left: 10px; padding-right: 10px; border: 1px solid #ddd; } table " \
+            u"{ border-collapse: collapse } td { text-align:center }</style>"
+    lines += "<h3>Pokemon Stats</h3>"
+    lines += "<table><tr>"
+    for h in headers:
+        if hdict[h] == sort:
+            r = not reverse
+            arrow = u" ▲" if reverse else u" ▼"
+        else:
+            r = False
+            arrow = ""
+        lines += u"<th><a href=./{}?sort={}&reverse={}&max_per_page={}>{}{}</a></th>".format(page, hdict[h], r,
+                                                                                             max_pokemon_per_page, h, arrow)
+    lines += "</tr>"
+
+    if page * max_pokemon_per_page > len(pstats):    #Page number is too great, set to last page
+        page = max_page
+    if page < 1:
+        page = 1
+
+    for i in range((page-1)*max_pokemon_per_page, page*max_pokemon_per_page):
+        if i >= len(pstats):
+            break
+        pid = pstats[i]['pid']
+        lines += "<tr>"
+        lines += td(pid)
+        lines += td(get_pokemon_name(pid))
+        lines += td(pstats[i]['count'])
+        lines += "</tr>"
+    lines += "</table>"
+
+    if len(pstats) > max_pokemon_per_page:  # Use pages if we have more than max_scouts_per_page
+        lines += "<br>"
+        lines += "Page: "
+        if max_page > 1 and page > 1:
+            lines += u"<a href=./{}?sort={}&reverse={}&max_per_page={}>&lt;</a> | ".format(page - 1, sort, reverse,
+                                                                                           max_pokemon_per_page)
+        for p in range(1, max_page + 1):
+            if p == page:
+                lines += str(p)
+            else:
+                lines += u"<a href=./{}?sort={}&reverse={}&max_per_page={}>{}</a>".format(p, sort, reverse,
+                                                                                          max_pokemon_per_page, p)
+            if p < max_page:
+                lines += " | "
+        if max_page > 1 and page < max_page:
+            lines += u" | <a href=./{}?sort={}&reverse={}&max_per_page={}>&gt;</a>".format(page + 1, sort, reverse,
+                                                                                           max_pokemon_per_page)
+        lines += "<br>"
+
+    lines += "<br>Max Per Page:&nbsp;&nbsp;"
+    lines += "<select onchange='this.options[this.selectedIndex].value && (window.location = this.options[this.selectedIndex].value);'>"
+    lines += u"<option value=./{}?sort={}&reverse={}&max_per_page=10 {}>10</option>".format(page, sort, reverse,
+                                                                                            "selected" if max_pokemon_per_page == 10 else "")
+    lines += u"<option value=./{}?sort={}&reverse={}&max_per_page=25 {}>25</option>".format(page, sort, reverse,
+                                                                                            "selected" if max_pokemon_per_page == 25 else "")
+    lines += u"<option value=./{}?sort={}&reverse={}&max_per_page=50 {}>50</option>".format(page, sort, reverse,
+                                                                                            "selected" if max_pokemon_per_page == 50 else "")
+    lines += u"<option value=./{}?sort={}&reverse={}&max_per_page=100 {}>100</option>".format(page, sort, reverse,
+                                                                                              "selected" if max_pokemon_per_page == 100 else "")
+    lines += "</select><br>"
 
     return lines
 
