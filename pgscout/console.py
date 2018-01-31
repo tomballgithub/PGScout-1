@@ -163,10 +163,10 @@ def print_scouts(lines, state, scouts):
 
 def print_pokemon(lines, state):
     def format_pstat_line(current_line, e):
-        return line_tmpl.format(get_pokemon_name(e['pid']), e['count'])
+        return line_tmpl.format(e['id'], get_pokemon_name(e['pid']), e['count'])
 
-    line_tmpl = u'{:20} | {:10}'
-    lines.append(line_tmpl.format('Pokemon', 'Encounters'))
+    line_tmpl = u'{:3} | {:20} | {:10}'
+    lines.append(line_tmpl.format('#', 'Pokemon', 'Encounters'))
     pstats = get_pokemon_stats()
     return print_lines(lines, format_pstat_line, pstats, 4, state)
 
