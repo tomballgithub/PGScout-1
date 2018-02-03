@@ -148,7 +148,9 @@ def print_scouts(lines, state, scouts):
                               map(lambda s: len(s.acc.username), scouts)))
     len_num = str(len(str(len(scouts))))
     if cfg_get('proxies'):
-        line_tmpl = u'{:' + len_num + '} | {:' + len_username + '} | {:25} | {:8} | {:4} | {:6} | {:10} | {:6} | {:6} |{:14} | {}'
+        len_proxies = str(reduce(lambda l1, l2: max(l1, l2),
+                                  map(lambda s: len(str(s.acc.proxy_url)), scouts)))
+        line_tmpl = u'{:' + len_num + '} | {:' + len_username + '} | {:' + len_proxies + '} | {:8} | {:4} | {:6} | {:10} | {:6} | {:6} | {:14} | {}'
         lines.append(
             line_tmpl.format('#', 'Scout', 'Proxy', 'Start', 'Warn', 'Active', 'Encounters', 'Enc/h', 'Errors',
                              'Last Encounter', 'Message'))
