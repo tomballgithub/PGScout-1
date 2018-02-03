@@ -91,13 +91,15 @@ def print_status(scouts, initial_display, jobs):
         for scout in scouts:
             enctotal   = enctotal   + scout.acc.encounters_per_hour if scout.active else 0.0
 
-        lines.append("")
-        lines.append("Enc/hr Total:   {:5.0f}".format(enctotal))
+        if state['display'] == 'scouts':
+            lines.append("")
+            lines.append("Enc/hr Total:   {:5.0f}".format(enctotal))
+            lines.append("")
 
         # Footer
-        lines.append("")
         lines.append('Page {}/{}. Page number to switch pages. <enter> to '
                      'toggle log view. "p" for Pokemon stats.'
+                     ' "u" for queue.'
                      ' "t" to toggle accepting new requests.'.format(
             state['page'], total_pages))
 
