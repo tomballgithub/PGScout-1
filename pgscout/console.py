@@ -148,7 +148,9 @@ def print_scouts(lines, state, scouts):
                               map(lambda s: len(s.acc.username), scouts)))
     len_num = str(len(str(len(scouts))))
     if cfg_get('proxies'):
-        line_tmpl = u'{:' + len_num + '} | {:' + len_username + '} | {:25} | {:8} | {:4} | {:6} | {:10} | {:6} | {:6} |{:14} | {}'
+        len_proxies = str(reduce(lambda l1, l2: max(l1, l2),
+                                  map(lambda s: len(str(s.acc.proxy_url)), scouts)))
+        line_tmpl = u'{:' + len_num + '} | {:' + len_username + '} | {:' + len_proxies + '} | {:8} | {:4} | {:6} | {:10} | {:6} | {:6} | {:14} | {}'
         lines.append(
             line_tmpl.format('#', 'Scout', 'Proxy', 'Start', 'Warn', 'Active', 'Encounters', 'Enc/h', 'Errors',
                              'Last Encounter', 'Message'))
@@ -156,15 +158,15 @@ def print_scouts(lines, state, scouts):
         line_tmpl = u'{:' + len_num + '} | {:' + len_username + '} | {:8} | {:4} | {:6} | {:10} | {:6} | {:6} | {:14} | {}'
         lines.append(line_tmpl.format('#', 'Scout', 'Start', 'Warn', 'Active', 'Encounters', 'Enc/h', 'Errors',
                                       'Last Encounter', 'Message'))
-    return print_lines(lines, scout_line, scouts, 4, state)
+    return print_lines(lines, scout_line, scouts, 7, state)
 
 
 def print_pokemon(lines, state):
     def format_pstat_line(current_line, e):
-        return line_tmpl.format(get_pokemon_name(e['pid']), e['count'])
+        return line_tmpl.format(e['pid'], get_pokemon_name(e['pid']), e['count'])
 
-    line_tmpl = u'{:20} | {:10}'
-    lines.append(line_tmpl.format('Pokemon', 'Encounters'))
+    line_tmpl = u'{:3} | {:20} | {:10}'
+    lines.append(line_tmpl.format('#', 'Pokemon', 'Encounters'))
     pstats = get_pokemon_stats()
     return print_lines(lines, format_pstat_line, pstats, 4, state)
 

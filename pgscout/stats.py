@@ -19,5 +19,5 @@ def get_pokemon_stats():
     pstats = map(lambda (pid, count): {'pid': pid, 'count': count},
                  statistics['pokemon'].items())
     stats_lock.release()
-    pstats.sort(key=lambda x: x['pid'])
+    pstats.sort(key=lambda x: x['count'], reverse=True)
     return pstats
