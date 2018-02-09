@@ -2,7 +2,7 @@
 #################
 
 #host: 127.0.0.1        # Host or IP to bind to.
-#port: 4242             # Port to bind to.
+#port: 4243             # Port to bind to.
 
 
 # API & Network Settings
