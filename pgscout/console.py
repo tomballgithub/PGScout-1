@@ -91,13 +91,15 @@ def print_status(scouts, initial_display, jobs):
         for scout in scouts:
             enctotal   = enctotal   + scout.acc.encounters_per_hour if scout.active else 0.0
 
-        lines.append("")
-        lines.append("Enc/hr Total:   {:5.0f}".format(enctotal))
+        if state['display'] == 'scouts':
+            lines.append("")
+            lines.append("Enc/hr Total:   {:5.0f}".format(enctotal))
+            lines.append("")
 
         # Footer
-        lines.append("")
         lines.append('Page {}/{}. Page number to switch pages. <enter> to '
                      'toggle log view. "p" for Pokemon stats.'
+                     ' "u" for queue.'
                      ' "t" to toggle accepting new requests.'.format(
             state['page'], total_pages))
 
@@ -150,12 +152,12 @@ def print_scouts(lines, state, scouts):
     if cfg_get('proxies'):
         len_proxies = str(reduce(lambda l1, l2: max(l1, l2),
                                   map(lambda s: len(str(s.acc.proxy_url)), scouts)))
-        line_tmpl = u'{:' + len_num + '} | {:' + len_username + '} | {:' + len_proxies + '} | {:8} | {:4} | {:6} | {:10} | {:6} | {:6} | {:14} | {}'
+        line_tmpl = u'{:' + len_num + '} | {:' + len_username + '} | {:' + len_proxies + '} | {:14} | {:4} | {:6} | {:10} | {:6} | {:6} | {:14} | {}'
         lines.append(
             line_tmpl.format('#', 'Scout', 'Proxy', 'Start', 'Warn', 'Active', 'Encounters', 'Enc/h', 'Errors',
                              'Last Encounter', 'Message'))
     else:
-        line_tmpl = u'{:' + len_num + '} | {:' + len_username + '} | {:8} | {:4} | {:6} | {:10} | {:6} | {:6} | {:14} | {}'
+        line_tmpl = u'{:' + len_num + '} | {:' + len_username + '} | {:14} | {:4} | {:6} | {:10} | {:6} | {:6} | {:14} | {}'
         lines.append(line_tmpl.format('#', 'Scout', 'Start', 'Warn', 'Active', 'Encounters', 'Enc/h', 'Errors',
                                       'Last Encounter', 'Message'))
     return print_lines(lines, scout_line, scouts, 7, state)
@@ -216,7 +218,7 @@ def calc_pagination(total_rows, non_data_rows, state):
 
 def hr_tstamp(tstamp):
     if isinstance(tstamp, float):
-        return datetime.fromtimestamp(tstamp).strftime("%H:%M:%S")
+        return datetime.fromtimestamp(tstamp).strftime("%d/%m %H:%M:%S")
     else:
         return tstamp
 
