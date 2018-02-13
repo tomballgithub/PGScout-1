@@ -63,6 +63,7 @@ def get_iv():
     forced = request.args.get('forced')
     prio = PRIO_HIGH if forced is not None else get_pokemon_prio(pokemon_id)
 
+    cache_enable = not cfg_get('disable_cache')
     max_queued_jobs = cfg_get('max_queued_jobs')
     num_jobs = jobs.qsize()
     if max_queued_jobs and num_jobs >= max_queued_jobs and prio == PRIO_LOW:
@@ -78,13 +79,14 @@ def get_iv():
     spawn_point_id = request.args.get("spawn_point_id")
     despawn_time = request.args.get("despawn_time")
 
-    # Check cache
-    cache_key = "{}-{}".format(encounter_id, weather) if encounter_id else "{}-{}-{}".format(pokemon_id, lat, lng)
-    result = get_cached_encounter(cache_key)
-    if result:
-        log.info(
-            u"Returning cached result: {:.1f}% level {} {} with {} CP".format(result['iv_percent'], result['level'], pokemon_name, result['cp']))
-        return jsonify(result)
+    if cache_enable:
+        # Check cache
+        cache_key = "{}-{}".format(encounter_id, weather) if encounter_id else "{}-{}-{}".format(pokemon_id, lat, lng)
+        result = get_cached_encounter(cache_key)
+        if result:
+            log.info(
+                u"Returning cached result: {:.1f}% level {} {} with {} CP".format(result['iv_percent'], result['level'], pokemon_name, result['cp']))
+            return jsonify(result)
 
     # Create a ScoutJob
     job = ScoutJob(pokemon_id, encounter_id, spawn_point_id, lat, lng, despawn_time=despawn_time)
@@ -95,7 +97,7 @@ def get_iv():
         time.sleep(1)
 
     # Cache successful jobs and return result
-    if job.result['success']:
+    if cache_enable and job.result['success']:
         cache_encounter(cache_key, job.result)
     return jsonify(job.result)
 
