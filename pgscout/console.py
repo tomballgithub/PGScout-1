@@ -23,7 +23,10 @@ def input_processor(state):
 
     while True:
         # Wait for the user to press a key.
-        command = raw_input()
+        try:
+            command = raw_input()
+        except Exception as e:
+            command = ''
 
         if command.isdigit():
             state['page'] = int(command)
