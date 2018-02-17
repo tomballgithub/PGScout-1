@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 
 # Collect this many samples to determine an encounters/hour value.
-NUM_PAUSE_SAMPLES = 3
+NUM_PAUSE_SAMPLES = 5
 
 ENCOUNTER_RESULTS = {
     0: "ENCOUNTER_ERROR",
@@ -181,7 +181,6 @@ class Scout(POGOAccount):
     def scout_by_encounter_id(self, job):
         self.log_info("Performing encounter request at {}, {}".format(job.lat, job.lng))
         responses = self.req_encounter(job.encounter_id, job.spawn_point_id, float(job.lat), float(job.lng))
-        self.update_history()
         return self.parse_encounter_response(responses, job)
 
     def parse_encounter_response(self, responses, job):
@@ -259,6 +258,8 @@ class Scout(POGOAccount):
         # Add form of Unown
         if job.pokemon_id == 201:
             responses['form'] = pokemon_info.pokemon_display.form
+
+        self.update_history()
 
         self.log_info(
             u"Found a {:.1f}% ({}/{}/{}) L{} {} with {} CP (scout level {}).".format(
