@@ -20,14 +20,14 @@ def cache_encounter(encounter_id, encounter_data):
     cache_lock.release()
 
 
-def cleanup_cache():
+def cleanup_cache(minutes):
     # Remove all entries from encounter cache older than 1 hour.
     now = time.time()
     cache_lock.acquire()
     num_deleted = 0
     for encounter_id in encounter_cache.keys():
         encounter = encounter_cache[encounter_id]
-        if now - encounter['encountered_time'] > 60 * 60:
+        if now - encounter['encountered_time'] > 60 * minutes:
             del encounter_cache[encounter_id]
             num_deleted += 1
     cache_lock.release()
