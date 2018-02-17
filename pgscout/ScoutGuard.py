@@ -56,5 +56,7 @@ class ScoutGuard(object):
                 log.info("Swapping bad account {} with new account {}".format(self.acc.username, new_acc['username']))
                 self.acc = self.init_scout(new_acc)
                 break
+            self.acc.username = "Waiting for account"
+            self.acc.last_msg = ""
             log.warning("Could not request new account from PGPool. Out of accounts? Retrying in 1 minute.")
             time.sleep(60)
