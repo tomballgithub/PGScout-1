@@ -78,9 +78,12 @@ def load_pgpool_accounts(count, reuse=False):
         'min_level': cfg_get('level'),
         'reuse': reuse
     }
-    r = requests.get("{}/account/request".format(cfg_get('pgpool_url')), params=request)
-    return r.json()
-
+    try:
+        r = requests.get("{}/account/request".format(cfg_get('pgpool_url')), params=request)
+        return r.json()
+    except Exception as ex:
+        log.info("PGPool account fetch error: {}".format(ex))
+    return {}
 
 def distance(pos1, pos2):
     return haversine((tuple(pos1))[0:2], (tuple(pos2))[0:2])
