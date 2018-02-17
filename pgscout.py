@@ -283,7 +283,7 @@ def load_accounts(jobs):
     elif cfg_get('pgpool_url') and cfg_get('pgpool_system_id') and cfg_get('pgpool_num_accounts') > 0:
 
         acc_json = load_pgpool_accounts(cfg_get('pgpool_num_accounts'), reuse=True)
-        if isinstance(acc_json, dict):
+        if isinstance(acc_json, dict) and len(acc_json) > 0:
             acc_json = [acc_json]
 
         for i in range(0, cfg_get('pgpool_num_accounts')):
