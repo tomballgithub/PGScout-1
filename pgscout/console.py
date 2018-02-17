@@ -91,12 +91,14 @@ def print_status(scouts, initial_display, jobs):
 
         # Encounters
         enctotal = 0
+        active = 0
         for scout in scouts:
             enctotal   = enctotal   + (scout.acc.encounters_per_hour if scout.active else 0.0)
+            active     = active     + (1 if scout.active else 0)
 
         if state['display'] == 'scouts':
             lines.append("")
-            lines.append("Enc/hr Total:   {:5.0f}".format(enctotal))
+            lines.append("Enc/hr Total:   {:5.0f} ({} active)".format(enctotal,active))
             lines.append("")
 
         # Footer
