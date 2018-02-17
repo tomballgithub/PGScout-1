@@ -63,7 +63,7 @@ def get_iv():
     forced = request.args.get('forced')
     prio = PRIO_HIGH if forced is not None else get_pokemon_prio(pokemon_id)
 
-    cache_enable = not cfg_get('disable_cache')
+    cache_enable = cfg_get('cache_timer') > 0
     max_queued_jobs = cfg_get('max_queued_jobs')
     num_jobs = jobs.qsize()
     if max_queued_jobs and num_jobs >= max_queued_jobs and prio == PRIO_LOW:
@@ -265,9 +265,10 @@ def run_webserver():
 
 
 def cache_cleanup_thread():
+    minutes = cfg_get('cache_timer')
     while True:
         time.sleep(60)
-        num_deleted = cleanup_cache()
+        num_deleted = cleanup_cache(minutes)
         log.info("Cleaned up {} entries from encounter cache.".format(num_deleted))
 
 
@@ -315,10 +316,11 @@ for scout in scouts:
     t.daemon = True
     t.start()
 
-# Cleanup cache in background
-t = Thread(target=cache_cleanup_thread, name="cache_cleaner")
-t.daemon = True
-t.start()
+if cfg_get('cache_timer') > 0:
+    # Cleanup cache in background
+    t = Thread(target=cache_cleanup_thread, name="cache_cleaner")
+    t.daemon = True
+    t.start()
 
 # Start thread to print current status and get user input.
 t = Thread(target=print_status,
