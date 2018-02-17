@@ -23,7 +23,10 @@ def input_processor(state):
 
     while True:
         # Wait for the user to press a key.
-        command = raw_input()
+        try:
+            command = raw_input()
+        except Exception as e:
+            command = ''
 
         if command.isdigit():
             state['page'] = int(command)
@@ -88,12 +91,14 @@ def print_status(scouts, initial_display, jobs):
 
         # Encounters
         enctotal = 0
+        active = 0
         for scout in scouts:
-            enctotal   = enctotal   + scout.acc.encounters_per_hour if scout.active else 0.0
+            enctotal   = enctotal   + (scout.acc.encounters_per_hour if scout.active else 0.0)
+            active     = active     + (1 if scout.active else 0)
 
         if state['display'] == 'scouts':
             lines.append("")
-            lines.append("Enc/hr Total:   {:5.0f}".format(enctotal))
+            lines.append("Enc/hr Total:   {:5.0f} ({} active)".format(enctotal,active))
             lines.append("")
 
         # Footer

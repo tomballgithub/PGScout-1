@@ -63,6 +63,7 @@ def get_iv():
     forced = request.args.get('forced')
     prio = PRIO_HIGH if forced is not None else get_pokemon_prio(pokemon_id)
 
+    cache_enable = cfg_get('cache_timer') > 0
     max_queued_jobs = cfg_get('max_queued_jobs')
     num_jobs = jobs.qsize()
     if max_queued_jobs and num_jobs >= max_queued_jobs and prio == PRIO_LOW:
@@ -78,13 +79,14 @@ def get_iv():
     spawn_point_id = request.args.get("spawn_point_id")
     despawn_time = request.args.get("despawn_time")
 
-    # Check cache
-    cache_key = "{}-{}".format(encounter_id, weather) if encounter_id else "{}-{}-{}".format(pokemon_id, lat, lng)
-    result = get_cached_encounter(cache_key)
-    if result:
-        log.info(
-            u"Returning cached result: {:.1f}% level {} {} with {} CP".format(result['iv_percent'], result['level'], pokemon_name, result['cp']))
-        return jsonify(result)
+    if cache_enable:
+        # Check cache
+        cache_key = "{}-{}".format(encounter_id, weather) if encounter_id else "{}-{}-{}".format(pokemon_id, lat, lng)
+        result = get_cached_encounter(cache_key)
+        if result:
+            log.info(
+                u"Returning cached result: {:.1f}% level {} {} with {} CP".format(result['iv_percent'], result['level'], pokemon_name, result['cp']))
+            return jsonify(result)
 
     # Create a ScoutJob
     job = ScoutJob(pokemon_id, encounter_id, spawn_point_id, lat, lng, despawn_time=despawn_time)
@@ -95,7 +97,7 @@ def get_iv():
         time.sleep(1)
 
     # Cache successful jobs and return result
-    if job.result['success']:
+    if cache_enable and job.result['success']:
         cache_encounter(cache_key, job.result)
     return jsonify(job.result)
 
@@ -263,9 +265,10 @@ def run_webserver():
 
 
 def cache_cleanup_thread():
+    minutes = cfg_get('cache_timer')
     while True:
         time.sleep(60)
-        num_deleted = cleanup_cache()
+        num_deleted = cleanup_cache(minutes)
         log.info("Cleaned up {} entries from encounter cache.".format(num_deleted))
 
 
@@ -283,13 +286,16 @@ def load_accounts(jobs):
     elif cfg_get('pgpool_url') and cfg_get('pgpool_system_id') and cfg_get('pgpool_num_accounts') > 0:
 
         acc_json = load_pgpool_accounts(cfg_get('pgpool_num_accounts'), reuse=True)
-        if isinstance(acc_json, dict):
+        if isinstance(acc_json, dict) and len(acc_json) > 0:
             acc_json = [acc_json]
 
-        if len(acc_json) > 0:
-            log.info("Loaded {} accounts from PGPool.".format(len(acc_json)))
-            for acc in acc_json:
-                accounts.append(ScoutGuard(acc['auth_service'], acc['username'], acc['password'], jobs))
+        for i in range(0, cfg_get('pgpool_num_accounts')):
+            if i < len(acc_json):
+                accounts.append(ScoutGuard(acc_json[i]['auth_service'], acc_json[i]['username'], acc_json[i]['password'],
+                                           jobs))
+            else:
+                #We are using PGPool, load empty ScoutGuards that can be filled later
+                accounts.append(ScoutGuard(auth="", username="Waiting for account", password="", job_queue=jobs))
 
     if len(accounts) == 0:
         log.error("Could not load any accounts. Nothing to do. Exiting.")
@@ -313,10 +319,11 @@ for scout in scouts:
     t.daemon = True
     t.start()
 
-# Cleanup cache in background
-t = Thread(target=cache_cleanup_thread, name="cache_cleaner")
-t.daemon = True
-t.start()
+if cfg_get('cache_timer') > 0:
+    # Cleanup cache in background
+    t = Thread(target=cache_cleanup_thread, name="cache_cleaner")
+    t.daemon = True
+    t.start()
 
 # Start thread to print current status and get user input.
 t = Thread(target=print_status,

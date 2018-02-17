@@ -31,14 +31,19 @@ class ScoutGuard(object):
 
     def run(self):
         while True:
-            self.active = True
-            self.acc.run()
-            self.active = False
-            self.acc.release(reason=self.acc.last_msg)
-
+            if self.acc.username != "Waiting for account":
+                self.active = True
+                self.acc.run()
+                self.active = False
+                self.acc.release(reason=self.acc.last_msg)
+            else:
+                self.active = False
+                self.acc.last_msg=""
+                
             # Scout disabled, probably (shadow)banned.
             if use_pgpool():
                 self.swap_account()
+                time.sleep(5)
             else:
                 # We don't have a replacement account, so just wait a veeeery long time.
                 time.sleep(60*60*24*1000)
@@ -51,5 +56,7 @@ class ScoutGuard(object):
                 log.info("Swapping bad account {} with new account {}".format(self.acc.username, new_acc['username']))
                 self.acc = self.init_scout(new_acc)
                 break
+            self.acc.username = "Waiting for account"
+            self.acc.last_msg = ""
             log.warning("Could not request new account from PGPool. Out of accounts? Retrying in 1 minute.")
             time.sleep(60)
