@@ -18,10 +18,10 @@ log = logging.getLogger(__name__)
 
 
 # Collect this many samples to determine an encounters/hour value.
-NUM_PAUSE_SAMPLES = 5
+NUM_PAUSE_SAMPLES = 60
 
 ENCOUNTER_RESULTS = {
-    0: "ENCOUNTER_ERROR",
+    0: "ENCOUNTER_ERROR",I 
     1: "ENCOUNTER_SUCCESS",
     2: "ENCOUNTER_NOT_FOUND",
     3: "ENCOUNTER_CLOSED",
