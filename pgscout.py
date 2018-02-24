@@ -154,7 +154,16 @@ def status(page=1):
         lines += "</tr>"
     lines += "</table>"
 
+    # Encounters
+    enctotal = 0
+    active = 0
+    for scout in scouts:
+        enctotal   = enctotal   + (scout.acc.encounters_per_hour if scout.active else 0.0)
+        active     = active     + (1 if scout.active else 0)
     lines += "<br>"
+    lines += "Enc/hr Total:   {:5.0f} ({} active)".format(enctotal,active)
+    lines += "<br>"
+
     if len(scouts) > max_scouts_per_page:  # Use pages if we have more than max_scouts_per_page
         lines += "Page: "
         if max_page > 1 and page > 1:
