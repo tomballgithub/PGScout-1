@@ -150,7 +150,7 @@ def status(page=1):
         lines += td("{:5.1f}".format(s.encounters_per_hour))
         lines += td(s.errors)
         lines += td(hr_tstamp(s.previous_encounter))
-        lines += td(s.last_msg)
+        lines += td(s.last_msg.encode('utf-8'))
         lines += "</tr>"
     lines += "</table>"
 
