@@ -74,22 +74,21 @@ class ScoutGuard(object):
             new_acc = load_pgpool_accounts(1)
             if new_acc:
                 log.info("Swapping bad account {} with new account {}".format(self.acc.username, new_acc['username']))
-                self.update_multiplier_accounts(scouts,self.index,username,password,new_acc)
+                self.update_multiplier_accounts(scouts,self.index,username,password,new_acc,2)
                 self.acc = self.init_scout(new_acc, 0)
                 break
-            elseif not markedwaiting:
+            elif not markedwaiting:
                 self.acc.username = "Waiting for account"
                 self.acc.last_msg = ""
-                self.update_multiplier_accounts(scouts,self.index,"Waiting for account","",{})
+                self.update_multiplier_accounts(scouts,self.index,username,password,{'username' : self.acc.username},1)
                 markedwaiting = True
             log.warning("Could not request new account from PGPool. Out of accounts? Retrying in 1 minute.")
             time.sleep(60)
 
-    def update_multiplier_accounts(self, scouts, scoutindex, username, password, acctinfo):
-        s = scoutindex
-                                                                                                                                                           
+    def update_multiplier_accounts(self, scouts, scoutindex, username, password, acctinfo, duplicate_setting):
+        s = scoutindex * cfg_get('pgpool_acct_multiplier')
         log.info("Changing {} duplicate {}-{} accounts from {} to {}".format(cfg_get('pgpool_acct_multiplier')-1,s+1,s+cfg_get('pgpool_acct_multiplier'),username,acctinfo['username']))
         for x in range(s+1, s+cfg_get('pgpool_acct_multiplier')):  
             scouts[x].newacc = acctinfo
-            scouts[x].acc.duplicate = 2
-        break
+            scouts[x].acc.duplicate = duplicate_setting
+

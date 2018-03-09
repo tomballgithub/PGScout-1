@@ -302,12 +302,11 @@ def load_accounts(jobs):
         for i in range(0, cfg_get('pgpool_num_accounts')):
             if i < len(acc_json):
                 for x in range(0,cfg_get('pgpool_acct_multiplier')):
-                    accounts.append(ScoutGuard(acc_json[i]['auth_service'], acc_json[i]['username'], acc_json[i]['password'], jobs, 0 if x==0 else 1, x))
+                    accounts.append(ScoutGuard(acc_json[i]['auth_service'], acc_json[i]['username'], acc_json[i]['password'], jobs, 0 if x==0 else 1, i if x==0 else x))
             else:
                 #We are using PGPool, load empty ScoutGuards that can be filled later
-                accounts.append(ScoutGuard(auth="", username="Waiting for account", password="", job_queue=jobs))
                 for x in range(0,cfg_get('pgpool_acct_multiplier')):
-                    accounts.append(ScoutGuard(auth="", username="Waiting for account", password="", job_queue=jobs, 0 if x==0 else 1, x))
+                    accounts.append(ScoutGuard(auth="", username="Waiting for account", password="", job_queue=jobs, duplicate=0 if x==0 else 1, index=i if x==0 else x))
 
     if len(accounts) == 0:
         log.error("Could not load any accounts. Nothing to do. Exiting.")
